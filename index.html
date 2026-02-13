@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Will You Be My Valentine?</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Nunito:wght@400;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+
+<body>
+    <div class="dynamic-background">
+        <!-- Floating hearts added by JS -->
+    </div>
+
+    <!-- Feedback Text for Sarcasm/Questions -->
+    <div id="feedback-text" class="feedback-text">Drag my heart to the answer! ❤️</div>
+
+    <div class="container">
+        <div class="glass-card" id="mainCard">
+            <h1 class="title">Will you be my Valentine? 🌹</h1>
+
+            <div class="game-area">
+                <!-- Drop Zones -->
+                <div class="drop-zones">
+                    <div id="trash-zone" class="zone trash-zone">
+                        <div class="zone-icon">🗑️</div>
+                        <div class="zone-label">No</div>
+                    </div>
+
+                    <div id="love-zone" class="zone love-zone">
+                        <div class="zone-icon">💖</div>
+                        <div class="zone-label">Yes</div>
+                    </div>
+                </div>
+
+                <!-- Draggable Heart -->
+                <div id="drag-heart" class="drag-heart">
+                    ❤️
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card hidden" id="successCard">
+            <h1 class="title">YAYYYYY! 🎉❤️</h1>
+            <p class="subtitle">I knew you'd say yes eventually! Love you! 😘</p>
+            <div class="gif-container">
+                <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMzM0dnR4czh5anR4OHJ0eXJ0eXJ0eXJ0eXJ0eXJ0eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/MDJ9IbxxvDUQM/giphy.gif"
+                    alt="Excited Cat" class="cute-gif">
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
