@@ -3,8 +3,8 @@
     --secondary-color: #ff8fa3;
     --bg-gradient-start: #ffccd5;
     --bg-gradient-end: #fff0f3;
-    --glass-bg: rgba(255, 255, 255, 0.4);
-    --glass-border: rgba(255, 255, 255, 0.6);
+    --glass-bg: rgba(255, 255, 255, 0.6);
+    --glass-border: rgba(255, 255, 255, 0.8);
     --text-color: #590d22;
 }
 
@@ -13,15 +13,16 @@
     padding: 0;
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
-    /* Remove tap highlight on mobile */
-    overscroll-behavior: none;
-    /* Prevent pull-to-refresh on mobile */
+    user-select: none;
+    /* Prevent text selection */
 }
 
 body {
     font-family: 'Nunito', sans-serif;
     background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
     height: 100vh;
+    height: 100dvh;
+    /* Mobile viewport fix */
     width: 100vw;
     display: flex;
     flex-direction: column;
@@ -30,7 +31,6 @@ body {
     overflow: hidden;
     position: relative;
     touch-action: none;
-    /* Disable default browser touch actions for drag */
 }
 
 .dynamic-background {
@@ -41,15 +41,15 @@ body {
     height: 100%;
     z-index: -1;
     overflow: hidden;
+    pointer-events: none;
 }
 
 .bg-heart {
     position: absolute;
-    color: rgba(255, 77, 109, 0.15);
+    color: rgba(255, 77, 109, 0.2);
     animation: floatUp 15s linear infinite;
     bottom: -50px;
     font-size: 2rem;
-    user-select: none;
 }
 
 @keyframes floatUp {
@@ -59,11 +59,11 @@ body {
     }
 
     10% {
-        opacity: 0.5;
+        opacity: 0.6;
     }
 
     90% {
-        opacity: 0.5;
+        opacity: 0.6;
     }
 
     100% {
@@ -72,214 +72,271 @@ body {
     }
 }
 
+/* Feedback Text */
 .feedback-text {
-    position: absolute;
-    top: 5%;
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
     width: 90%;
+    max-width: 400px;
     text-align: center;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-weight: 800;
     color: var(--primary-color);
-    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.9);
-    z-index: 100;
-    background: rgba(255, 255, 255, 0.7);
-    padding: 10px;
-    border-radius: 15px;
+    background: rgba(255, 255, 255, 0.85);
+    padding: 12px 20px;
+    border-radius: 50px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
     backdrop-filter: blur(5px);
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.3s ease;
+    pointer-events: none;
 }
 
 .container {
     width: 100%;
-    max-width: 500px;
     height: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 20px;
+    position: relative;
 }
 
+/* Glass Card */
 .glass-card {
     background: var(--glass-bg);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--glass-border);
-    border-radius: 24px;
+    border: 2px solid var(--glass-border);
+    border-radius: 30px;
     padding: 20px;
-    box-shadow: 0 8px 32px 0 rgba(77, 13, 34, 0.15);
+    box-shadow: 0 10px 40px -10px rgba(77, 13, 34, 0.2);
     width: 100%;
-    height: 90vh;
-    /* Take up most of screen on mobile */
+    max-width: 450px;
+    height: auto;
+    max-height: 85vh;
+    /* Leave room */
     display: flex;
+    /* Default display */
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    transition: transform 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+}
+
+.hidden {
+    display: none !important;
+    opacity: 0 !important;
+    pointer-events: none;
 }
 
 .title {
     font-family: 'Great Vibes', cursive;
-    font-size: 3rem;
+    font-size: 2.8rem;
+    color: var(--primary-color);
+    text-align: center;
+    margin-bottom: 20px;
+    line-height: 1.2;
+    text-shadow: 2px 2px 0px rgba(255, 255, 255, 0.5);
+}
+
+.subtitle {
+    font-size: 1.1rem;
     color: var(--text-color);
     text-align: center;
-    margin-top: 20px;
-    flex: 0 0 auto;
+    margin-bottom: 20px;
+    font-weight: 600;
 }
 
+/* Game Area */
 .game-area {
-    position: relative;
     width: 100%;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    /* Drop zones at bottom */
-    align-items: center;
-}
-
-.drag-heart {
-    font-size: 5rem;
-    cursor: grab;
-    position: absolute;
-    top: 30%;
-    /* Start position */
-    left: 50%;
-    transform: translate(-50%, -50%);
-    filter: drop-shadow(0 5px 15px rgba(255, 77, 109, 0.5));
-    transition: transform 0.1s;
-    /* Quick response for drag, slower for spring back handled by JS */
-    z-index: 50;
-    user-select: none;
-}
-
-.drag-heart:active {
-    cursor: grabbing;
-    transform: translate(-50%, -50%) scale(1.1);
+    height: 300px;
+    /* Fixed height for consistency */
+    position: relative;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    margin-top: auto;
 }
 
 .drop-zones {
-    display: flex;
+    position: absolute;
+    bottom: 20px;
     width: 100%;
-    justify-content: space-between;
-    padding-bottom: 40px;
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
 }
 
 .zone {
-    width: 120px;
-    height: 120px;
-    background: rgba(255, 255, 255, 0.5);
+    width: 100px;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.6);
     border-radius: 50%;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    border: 2px dashed rgba(255, 255, 255, 0.8);
-    transition: all 0.3s ease;
+    border: 3px dashed rgba(255, 77, 109, 0.3);
+    transition: transform 0.2s ease;
 }
 
 .zone-icon {
-    font-size: 3rem;
+    font-size: 2.5rem;
+    margin-bottom: 5px;
 }
 
 .zone-label {
+    font-size: 0.9rem;
     font-weight: 700;
-    margin-top: 5px;
-    font-size: 1.1rem;
     color: var(--text-color);
 }
 
+.love-zone {
+    border-color: rgba(255, 77, 109, 0.6);
+    background: rgba(255, 220, 230, 0.6);
+}
+
 .trash-zone {
+    border-color: rgba(100, 100, 100, 0.3);
     position: relative;
-    /* Setup for moving */
-    transition: top 0.3s, left 0.3s;
-    /* Smooth running away */
+    /* Relevant for JS movement */
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Success Card specifics */
-#successCard {
-    height: auto;
+/* Draggable Heart */
+.drag-heart {
+    width: 80px;
+    height: 80px;
+    font-size: 4rem;
+    position: absolute;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    cursor: grab;
+    z-index: 10;
+    display: flex;
     justify-content: center;
-    text-align: center;
+    align-items: center;
+    filter: drop-shadow(0 8px 15px rgba(255, 77, 109, 0.4));
+    animation: heartbeat 1.5s infinite;
 }
 
-.subtitle {
-    margin: 20px 0;
-    font-size: 1.2rem;
+@keyframes heartbeat {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    15% {
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+
+    30% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    45% {
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+
+    60% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+.drag-heart:active {
+    cursor: grabbing;
+    animation: none;
+    /* Stop pulsing while dragging */
+    transform: translate(-50%, -50%) scale(1.2);
+}
+
+/* Success Card */
+#successCard {
+    text-align: center;
+    display: none;
+    /* Initial state handled by .hidden, but good fallback */
+}
+
+.gif-container {
+    width: 100%;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-top: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
 .cute-gif {
     width: 100%;
-    border-radius: 15px;
+    height: auto;
+    display: block;
 }
 
 /* Animations */
 @keyframes shake {
+
+    0%,
+    100% {
+        transform: translateX(-50%);
+    }
+
+    25% {
+        transform: translateX(-55%) rotate(-2deg);
+    }
+
+    75% {
+        transform: translateX(-45%) rotate(2deg);
+    }
+}
+
+@keyframes pulse {
     0% {
-        transform: translate(1px, 1px) rotate(0deg);
-    }
-
-    10% {
-        transform: translate(-1px, -2px) rotate(-1deg);
-    }
-
-    20% {
-        transform: translate(-3px, 0px) rotate(1deg);
-    }
-
-    30% {
-        transform: translate(3px, 2px) rotate(0deg);
-    }
-
-    40% {
-        transform: translate(1px, -1px) rotate(1deg);
+        transform: translateX(-50%) scale(1);
     }
 
     50% {
-        transform: translate(-1px, 2px) rotate(-1deg);
-    }
-
-    60% {
-        transform: translate(-3px, 1px) rotate(0deg);
-    }
-
-    70% {
-        transform: translate(3px, 1px) rotate(-1deg);
-    }
-
-    80% {
-        transform: translate(-1px, -1px) rotate(1deg);
-    }
-
-    90% {
-        transform: translate(1px, 2px) rotate(0deg);
+        transform: translateX(-50%) scale(1.05);
     }
 
     100% {
-        transform: translate(1px, -2px) rotate(-1deg);
+        transform: translateX(-50%) scale(1);
     }
 }
 
-.shaking {
-    animation: shake 0.5s;
-    animation-iteration-count: infinite;
-}
-
-.click-heart {
-    position: fixed;
-    pointer-events: none;
-    animation: heartPop 1s ease-out forwards;
-    z-index: 100;
-    font-size: 24px;
-}
-
-@keyframes heartPop {
-    0% {
-        transform: translate(-50%, -50%) scale(0.5);
-        opacity: 1;
+/* Mobile Tweaks */
+@media (max-width: 400px) {
+    .title {
+        font-size: 2.2rem;
     }
 
-    100% {
-        transform: translate(-50%, -150%) scale(2);
-        opacity: 0;
+    .glass-card {
+        padding: 15px;
+        height: auto;
+        min-height: 400px;
+    }
+
+    .game-area {
+        height: 260px;
+    }
+
+    .zone {
+        width: 90px;
+        height: 90px;
+    }
+
+    .drag-heart {
+        font-size: 3.5rem;
+    }
+
+    .zone-icon {
+        font-size: 2rem;
     }
 }

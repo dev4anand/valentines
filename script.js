@@ -4,11 +4,13 @@ const loveZone = document.getElementById('love-zone');
 const feedbackText = document.getElementById('feedback-text');
 const mainCard = document.getElementById('mainCard');
 const successCard = document.getElementById('successCard');
+const gameArea = document.querySelector('.game-area');
 
 // Game State
 let yesAttempts = 0;
 let isDragging = false;
 let startX, startY, initialLeft, initialTop;
+let trashOffset = { x: 0, y: 0 };
 
 // Phrases
 const trashPhrases = [
@@ -16,12 +18,12 @@ const trashPhrases = [
     "How dare you! 😤",
     "Try the other one! 👉",
     "Nope, not here! 🚫",
-    "Don't even think about it! 🤨",
-    "I will run away! 🏃‍♂️",
-    "Am I a joke to you? 🤡",
-    "Wrong choice! ❌",
+    "I'm precious! 💎",
+    "Are you blind? 🕶️",
+    "Wrong hole! 😳",
     "Heart goes in Heart! ❤️",
-    "Stay away! 😱"
+    "Get away! 😱",
+    "Nuh uh! ☝️"
 ];
 
 const yesPhrases = [
@@ -29,46 +31,81 @@ const yesPhrases = [
     "Really really sure? 🧐",
     "Lock your answer? 🔒",
     "Final answer? 📝",
-    "Promise you won't regret it? 💍",
-    "Okay, one last check... ✅"
+    "Promise? 💍",
 ];
+
+// Ensure initial state
+window.onload = () => {
+    successCard.style.display = 'none'; // Double check JS side hiding
+    successCard.classList.add('hidden');
+    mainCard.classList.remove('hidden');
+    mainCard.style.display = 'flex';
+};
 
 // Touch/Mouse Start
 const onDragStart = (e) => {
-    e.preventDefault();
+    // Determine input type and coordinates
+    const isTouch = e.type === 'touchstart';
+    if (!isTouch) e.preventDefault(); // Prevent default for mouse, touch needs it for scroll sometimes but we disabled touch-action
+
+    // If using touch, only track first finger
+    if (isTouch && e.touches.length > 1) return;
+
     isDragging = true;
 
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    // Get client coordinates
+    const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+    const clientY = isTouch ? e.touches[0].clientY : e.clientY;
 
-    // Get current position (relative to parent)
-    const style = window.getComputedStyle(dragHeart);
-    // Note: This relies on the element being absolutely positioned
-    initialLeft = parseFloat(style.left);
-    initialTop = parseFloat(style.top);
+    // Get current position relative to game-area
+    // We use offsetLeft/Top because we are constrained to the game area container now
+    initialLeft = dragHeart.offsetLeft;
+    initialTop = dragHeart.offsetTop;
 
     startX = clientX;
     startY = clientY;
 
-    dragHeart.style.transition = 'none'; // Disable transition for direct follow
+    dragHeart.style.transition = 'none';
     dragHeart.style.cursor = 'grabbing';
+    dragHeart.style.animation = 'none'; // Stop heartbeat
+
+    // Change feedback
+    feedbackText.innerText = "Drag me! ❤️";
+    feedbackText.style.animation = 'none';
 };
 
 // Touch/Mouse Move
 const onDragMove = (e) => {
     if (!isDragging) return;
 
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const isTouch = e.type === 'touchmove';
+    if (isTouch) e.preventDefault(); // Prevent scrolling 100%
+
+    const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+    const clientY = isTouch ? e.touches[0].clientY : e.clientY;
 
     const dx = clientX - startX;
     const dy = clientY - startY;
 
-    // Move the heart
-    dragHeart.style.left = `${initialLeft + dx}px`;
-    dragHeart.style.top = `${initialTop + dy}px`;
+    // New positions
+    let newLeft = initialLeft + dx;
+    let newTop = initialTop + dy;
 
-    // Check Proximity to Trash Logic
+    // Constrain to Game Area
+    const box = gameArea.getBoundingClientRect();
+    const heartW = dragHeart.offsetWidth;
+    const heartH = dragHeart.offsetHeight;
+
+    // Relative constraint math
+    // The dragHeart's parent is game-area. 
+    // Boundary check isn't strictly necessary for visual flow but nice to keep it on screen
+    // We'll just let it fly but update position
+
+    dragHeart.style.left = `${newLeft}px`;
+    dragHeart.style.top = `${newTop}px`;
+
+    // We need global coordinates for collision detection since elements might be nested differently
+    // Actually, getBoundingClientRect returns viewport coords, so that works for everything.
     checkTrashProximity(clientX, clientY);
 };
 
@@ -76,16 +113,11 @@ const onDragMove = (e) => {
 const onDragEnd = (e) => {
     if (!isDragging) return;
     isDragging = false;
-    dragHeart.style.transition = 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; // Add springy transition back
+    dragHeart.style.transition = 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
     dragHeart.style.cursor = 'grab';
+    dragHeart.style.animation = 'heartbeat 1.5s infinite'; // Resume heartbeat
 
-    // Check Drop Targets (using elementFromPoint because touches[0] is gone)
-    // For touchend/mouseup, we need the last known position or changedTouches
-    const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
-    const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
-
-    // We can't use elementFromPoint easily because the dragHeart is covering the cursor
-    // So we check simple collision rects
+    // Collision Check
     const heartRect = dragHeart.getBoundingClientRect();
     const trashRect = trashZone.getBoundingClientRect();
     const loveRect = loveZone.getBoundingClientRect();
@@ -95,25 +127,28 @@ const onDragEnd = (e) => {
         y: heartRect.top + heartRect.height / 2
     };
 
-    // Check Love Zone
+    // Check overlaps
     if (isColliding(heartCenter, loveRect)) {
         handleLoveDrop();
-    }
-    // Check Trash Zone
-    else if (isColliding(heartCenter, trashRect)) {
+    } else if (isColliding(heartCenter, trashRect)) {
         handleTrashDrop();
     } else {
         resetHeart();
     }
+
+    // Reset internal state if needed
 };
 
 function isColliding(point, rect) {
+    // Simple point-in-rect check
+    // Give a little buffer for better UX
     return point.x >= rect.left && point.x <= rect.right &&
         point.y >= rect.top && point.y <= rect.bottom;
 }
 
 function resetHeart() {
-    // Return to center (50%, 30% as defined in CSS)
+    // Return to default CSS position: left 50%, top 30%
+    // We clear inline styles so CSS takes over
     dragHeart.style.left = '50%';
     dragHeart.style.top = '30%';
     dragHeart.style.transform = 'translate(-50%, -50%)';
@@ -128,79 +163,95 @@ function checkTrashProximity(x, y) {
 
     const dist = Math.hypot(x - trashCenter.x, y - trashCenter.y);
 
-    // If getting close (e.g., 100px), MOVE TRASH!
-    if (dist < 120) {
+    // Distance check: 100px radius
+    if (dist < 100) {
         moveTrashCan();
     }
 }
 
 function moveTrashCan() {
-    // Generate random offset but keep it somewhat within the bottom area if possible
-    // Actually, just move it randomly around the game area relative to current position
-    const randomX = (Math.random() - 0.5) * 300; // -150 to 150
-    const randomY = (Math.random() - 0.5) * 300;
+    // Move slightly randomly but try to stay in the bottom area
+    // The trash zone is in .drop-zones which is at bottom: 20px
+    // We can use transform to push it around
 
-    // We update feedback text when it moves
-    setFeedback(trashPhrases[Math.floor(Math.random() * trashPhrases.length)], 'shake-text');
+    const rx = (Math.random() - 0.5) * 200; // Random X offset
+    const ry = (Math.random() - 0.5) * 150; // Random Y offset
 
-    // Apply transform to move it away visually (simpler than changing left/top flow)
-    // But we need to update its actual position for collision detection to work right if we used that.
-    // CSS Transform translate is purely visual for some hit tests, but getBoundingClientRect respects it.
+    // Accumulate or set? Set is safer to avoid flying off screen
+    trashOffset = { x: rx, y: ry };
 
-    // Let's use simple translation relative to its flow position
-    const currentTransform = new WebKitCSSMatrix(window.getComputedStyle(trashZone).transform);
+    trashZone.style.transform = `translate(${rx}px, ${ry}px)`;
 
-    trashZone.style.transform = `translate(${currentTransform.m41 + randomX}px, ${currentTransform.m42 + randomY}px)`;
-
-    // Reset after a bit so it's not permanently gone? No, let it stay away.
+    // Feedback
+    const phrase = trashPhrases[Math.floor(Math.random() * trashPhrases.length)];
+    setFeedback(phrase, 'shake');
 }
 
 function handleLoveDrop() {
-    // Multi-stage confirmation
-    if (yesAttempts < 3) {
-        // Playful rejection
-        setFeedback(yesPhrases[yesAttempts], 'pulse-text');
+    if (yesAttempts < yesPhrases.length) {
+        setFeedback(yesPhrases[yesAttempts], 'pulse');
         yesAttempts++;
         resetHeart();
+
+        // Reset trash for next attempt
+        trashZone.style.transform = 'translate(0,0)';
     } else {
-        // Success!
         triggerSuccess();
     }
 }
 
 function handleTrashDrop() {
-    // Should be impossible due to evasion, but if they manage it:
-    setFeedback("Hey! I said NO! 😡", 'shake-text');
+    setFeedback("I said NO! 😠", 'shake');
     resetHeart();
     moveTrashCan();
 }
 
-function setFeedback(text, animClass) {
+function setFeedback(text, animType) {
     feedbackText.innerText = text;
     feedbackText.style.animation = 'none';
-    feedbackText.offsetHeight; /* trigger reflow */
-    if (animClass === 'shake-text') {
-        feedbackText.style.animation = 'shake 0.5s';
+    feedbackText.offsetHeight; // reflow
+
+    if (animType === 'shake') {
+        feedbackText.style.animation = 'shake 0.4s ease-in-out';
     } else {
-        feedbackText.style.animation = 'pulse 0.5s';
+        feedbackText.style.animation = 'pulse 0.4s ease-in-out';
     }
 }
 
 function triggerSuccess() {
-    // Confetti
     confetti({
         particleCount: 200,
-        spread: 100,
+        spread: 120,
         origin: { y: 0.6 }
     });
 
+    // Swap cards
     mainCard.style.display = 'none';
+    mainCard.classList.add('hidden');
+
+    successCard.style.display = 'flex';
     successCard.classList.remove('hidden');
-    successCard.style.display = 'block';
-    feedbackText.innerText = "YAY! I LOVE YOU! ❤️";
+
+    feedbackText.innerText = "YAY! I KNEW IT! 🥰";
+
+    // Continuous fireworks
+    setInterval(() => {
+        confetti({
+            particleCount: 20,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 }
+        });
+        confetti({
+            particleCount: 20,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 }
+        });
+    }, 1000);
 }
 
-// Add Events
+// Event Listeners
 dragHeart.addEventListener('mousedown', onDragStart);
 document.addEventListener('mousemove', onDragMove);
 document.addEventListener('mouseup', onDragEnd);
@@ -209,17 +260,14 @@ dragHeart.addEventListener('touchstart', onDragStart, { passive: false });
 document.addEventListener('touchmove', onDragMove, { passive: false });
 document.addEventListener('touchend', onDragEnd, { passive: false });
 
-// Background hearts
-function initFloatingHearts() {
-    const bg = document.querySelector('.dynamic-background');
-    for (let i = 0; i < 15; i++) {
-        const heart = document.createElement('div');
-        heart.classList.add('bg-heart');
-        heart.innerHTML = Math.random() > 0.5 ? '❤️' : '💖';
-        heart.style.left = `${Math.random() * 100}%`;
-        heart.style.animationDuration = `${10 + Math.random() * 10}s`;
-        heart.style.animationDelay = `${Math.random() * 5}s`;
-        bg.appendChild(heart);
-    }
+// Background floating hearts
+const bg = document.querySelector('.dynamic-background');
+for (let i = 0; i < 20; i++) {
+    const el = document.createElement('div');
+    el.classList.add('bg-heart');
+    el.innerHTML = Math.random() > 0.5 ? '❤️' : '💖';
+    el.style.left = Math.random() * 100 + '%';
+    el.style.animationDuration = (10 + Math.random() * 15) + 's';
+    el.style.animationDelay = Math.random() * 5 + 's';
+    bg.appendChild(el);
 }
-initFloatingHearts();
