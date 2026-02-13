@@ -154,7 +154,12 @@ function resetHeart() {
     dragHeart.style.transform = 'translate(-50%, -50%)';
 }
 
+// Cooldown state
+let isTrashMoving = false;
+
 function checkTrashProximity(x, y) {
+    if (isTrashMoving) return; // Don't check if already moving
+
     const trashRect = trashZone.getBoundingClientRect();
     const trashCenter = {
         x: trashRect.left + trashRect.width / 2,
@@ -163,28 +168,41 @@ function checkTrashProximity(x, y) {
 
     const dist = Math.hypot(x - trashCenter.x, y - trashCenter.y);
 
-    // Distance check: 100px radius
-    if (dist < 100) {
+    // Trigger distance
+    if (dist < 120) {
         moveTrashCan();
     }
 }
 
 function moveTrashCan() {
-    // Move slightly randomly but try to stay in the bottom area
-    // The trash zone is in .drop-zones which is at bottom: 20px
-    // We can use transform to push it around
+    isTrashMoving = true;
 
-    const rx = (Math.random() - 0.5) * 200; // Random X offset
-    const ry = (Math.random() - 0.5) * 150; // Random Y offset
+    // 1. Fade out or quick scale down
+    trashZone.style.opacity = '0.5';
+    trashZone.style.transform = `scale(0.8) translate(${trashOffset.x}px, ${trashOffset.y}px)`; // Keep current pos but shrink
 
-    // Accumulate or set? Set is safer to avoid flying off screen
+    // 2. Calculate new position
+    // Move it significantly away to prevent immediate re-trigger
+    // We'll jump to a random spot within limit
+    const rx = (Math.random() - 0.5) * 200;
+    const ry = (Math.random() - 0.5) * 100 - 50; // Bias upwards slightly
+
     trashOffset = { x: rx, y: ry };
 
-    trashZone.style.transform = `translate(${rx}px, ${ry}px)`;
+    // 3. Apply new position after small delay for effect
+    setTimeout(() => {
+        trashZone.style.opacity = '1';
+        trashZone.style.transform = `scale(1) translate(${rx}px, ${ry}px)`;
 
-    // Feedback
-    const phrase = trashPhrases[Math.floor(Math.random() * trashPhrases.length)];
-    setFeedback(phrase, 'shake');
+        // Feedback
+        const phrase = trashPhrases[Math.floor(Math.random() * trashPhrases.length)];
+        setFeedback(phrase, 'shake');
+
+        // Cooldown reset
+        setTimeout(() => {
+            isTrashMoving = false;
+        }, 500); // 500ms cooldown before it can move again
+    }, 100);
 }
 
 function handleLoveDrop() {
